@@ -31,7 +31,7 @@
 1. java.concurrent.TimeoutException : 네트워크 연결 오류. </br>
   : 해외에서 서울 리전으로 변경.
 
-2. NoSuchElementException : element를 못찾는 이유. </br>
+2. NoSuchElementException : element를 못찾음. </br>
   : 동일한 IP로 잦은 크롤링에 의해서, 차단 페이지가 발생한 경우에 나타나는 현상. 따라서, Sentry.io로 pageSource를 통째로 보내서 확인함.
 
 3. 크롤링 작업 중에 발생한 Error에 대해서, throw 대신 -> log와 Sentry.io로 에러 전송. </br>
@@ -57,6 +57,7 @@
 </br>
 
 <img width="699" height="658" alt="스크린샷 2025-11-20 153806" src="https://github.com/user-attachments/assets/9c86e8bc-790e-48ac-8c20-e680fabe9ea2" />
+
 
 
 
