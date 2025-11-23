@@ -35,7 +35,7 @@
   : 동일한 IP로 잦은 크롤링에 의해서, 차단 페이지가 발생한 경우에 나타나는 현상. 따라서, Sentry.io로 pageSource를 통째로 보내서 확인함.
 
 3. 크롤링 작업 중에 발생한 Error에 대해서, throw 대신 -> log와 Sentry.io로 에러 전송. </br>
-  : throw를 던질 경우, 나머지 정상적인 데이터를 못가져오고 중지됨. 따라서, 최대한 많은 정보를 가져와야 함.
+  : throw를 던질 경우, 나머지 정상적인 데이터를 못가져오고 중지됨.
 
 ## 5-1. 최적화 작업 1 - Throttling.
   : 1) "6코어 -> 0.5코어(1vCPU)" + 2) "16 GB -> 3.75 GB"로 다운그레이드 된 상황에서도 크롤러를 작동시켜야 함. </br>
@@ -57,6 +57,7 @@
 </br>
 
 <img width="699" height="658" alt="스크린샷 2025-11-20 153806" src="https://github.com/user-attachments/assets/9c86e8bc-790e-48ac-8c20-e680fabe9ea2" />
+
 
 
 
