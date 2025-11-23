@@ -23,7 +23,7 @@
 ### [ 방법 ]
 
 1. VM 시작 시, " aws ec2-instance-connect open-tunnel ... & " 명령어를 통해서 로컬의 3306과 aws의 3389를 백그라운드에서 포트 연결을 함. -> 쉘 스크립트로 (재)시작 시, 항상 실행되도록 수정할 계획.
-2. docker run --network=host ${images}를 통해서 호스트 네트워크 사용 명령어. 참고로 jdbc url의 포트가 3306이기 때문에, 호스트 네트워크를 통해서 AWS의 RDS와 연결이 가능.
+2. docker run --network=host ${images}를 통해서 호스트 네트워크 사용. 참고로 jdbc url의 포트가 3306이기 때문에, 호스트 네트워크를 통해서 AWS의 RDS와 연결이 가능.
 3. 크롤링 시, 매번 데이터 주입.
 
 ## 4. Trouble Shooting
@@ -57,6 +57,7 @@
 </br>
 
 <img width="699" height="658" alt="스크린샷 2025-11-20 153806" src="https://github.com/user-attachments/assets/9c86e8bc-790e-48ac-8c20-e680fabe9ea2" />
+
 
 
 
