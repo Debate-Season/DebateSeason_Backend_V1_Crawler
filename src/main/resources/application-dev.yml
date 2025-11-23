@@ -1,0 +1,77 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  datasource:
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+
+jwt:
+  secret:
+    key: ${JWT_SECRET}
+  access-token:
+    expire-time: ${ACCESS_EXPIRE_TIME}
+  refresh-token:
+    expire-time: ${REFRESH_EXPIRE_TIME}
+
+logging:
+  level:
+    # 1) 루트 레벨: 개발 중에도 너무 과도한 로그는 피하기 위해 'info' 정도 권장
+    root: info
+
+    # 2) 애플리케이션 패키지 (예: com.example 패키지)
+    #    - Dev에서는 Controller, Service, Repository 모두 DEBUG로 두고 세부 흐름 파악
+    com.example: debug
+
+    # -------------------------------
+    # Spring MVC / Web
+    # -------------------------------
+    # 요청/응답 처리 과정을 상세히 보고 싶으면 debug,
+    # 정보 과다 시 info로 조절
+    org.springframework.web: debug
+
+    # -------------------------------
+    # Security
+    # -------------------------------
+    # 개발 중에도 인증/인가 과정 디버깅이 필요하다면 debug
+    org.springframework.security: debug
+
+    # -------------------------------
+    # JPA / Hibernate
+    # -------------------------------
+    # SQL 로그와 바인딩 파라미터까지 개발 중에는 보고 싶을 수 있음
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: debug
+    # Hikari(커넥션 풀)도 추가 정보 보고 싶다면 debug 가능
+    com.zaxxer.hikari: info
+
+    # -------------------------------
+    # WebSocket / STOMP
+    # -------------------------------
+    # STOMP 메시지의 트래픽 흐름, 메서드 실행 순서 등이 필요할 수 있으므로 debug
+    org.springframework.web.socket: debug
+    org.springframework.messaging: debug
+    org.springframework.web.socket.messaging: debug
+
+server:
+  servlet:
+    context-path: /dev
+
+  port: 80
+
+# 환경별로 스웨거 요청 분리
+swagger-base-url: "https://debate-season.click/dev"
+
+#stomp 연결 환경분리
+stomp-connect-url: "/dev/ws-stomp"

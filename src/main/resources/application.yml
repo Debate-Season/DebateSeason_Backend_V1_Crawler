@@ -1,0 +1,25 @@
+spring:
+  profiles:
+    default: local
+    group:
+      local: local,secret
+
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+    open-in-view: false  # OSIV 설정 중요
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health"
+      base-path: /actuator
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      show-details: never
+      show-components: always

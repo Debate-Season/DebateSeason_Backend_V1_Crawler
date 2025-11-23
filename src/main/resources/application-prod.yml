@@ -1,0 +1,89 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  datasource:
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+
+jwt:
+  secret:
+    key: ${JWT_SECRET}
+  access-token:
+    expire-time: ${ACCESS_EXPIRE_TIME}
+  refresh-token:
+    expire-time: ${REFRESH_EXPIRE_TIME}
+
+logging:
+  level:
+    # 1) 루트 레벨
+    root: error
+    # 2) 애플리케이션 패키지
+    com.debateseason_backend_v1: info
+
+    # -------------------------------
+    # Database & ORM
+    # -------------------------------
+    # SQL 실행 로그를 상세히 보고 싶다면 info, 단 성능 부담이 큼
+    org.hibernate.SQL: warn
+    # 파라미터(바인딩 값)까지 로그를 찍으려면 debug,
+    # 프로덕션에서는 warn 또는 info 정도로 제한 권장
+    org.hibernate.orm.jdbc.bind: warn
+
+    com.zaxxer.hikari: info   # 커넥션 풀 동작 관련 로그
+
+    # -------------------------------
+    # Network & Performance
+    # -------------------------------
+    org.apache.tomcat: info   # 톰캣 기동이나 에러 정도
+    org.apache.coyote: info   # 톰캣 커넥션/프로토콜 관련
+
+    # -------------------------------
+    # Spring Framework
+    # -------------------------------
+    org.springframework.web: info
+    org.springframework.security: info   # 운영에서 불필요한 시큐리티 디버그 로그는 지양
+    org.springframework.cache: warn      # 캐시 관련 중요 오류만
+    org.springframework.transaction: info
+
+    # -------------------------------
+    # WebSocket & STOMP
+    # -------------------------------
+    # 운영 중에는 warn 정도로 두고, 문제 발생 시 일시적으로 debug로 전환
+    org.springframework.web.socket: warn
+    org.springframework.messaging: warn
+    org.springframework.web.socket.messaging: warn
+
+    # -------------------------------
+    # Application Layers (구체적인 애플리케이션 코드)
+    # -------------------------------
+    # Controller: 사용자가 호출한 API 흐름은 info 정도로 남기면 운영 시 유용
+    com.debateseason_backend_v1.domain.*.controller: info
+
+    # Service, Repository: 대량 호출되거나 내부 로직이 많다면 warn 이상으로 조절
+    # 성능이나 로그량에 주의
+    com.debateseason_backend_v1.domain.*.service: warn
+    com.debateseason_backend_v1.domain.*.repository: warn
+
+server:
+  servlet:
+    context-path: /prod
+
+  port: 80
+
+# 환경별로 스웨거 요청 분리
+swagger-base-url: "https://debate-season.click/prod"
+
+#stomp 연결 환경분리
+stomp-connect-url: "/prod/ws-stomp"
