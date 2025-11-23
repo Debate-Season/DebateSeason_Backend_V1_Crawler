@@ -34,25 +34,30 @@
 2. NoSuchElementException : element를 못찾는 이유. </br>
   : 동일한 IP로 잦은 크롤링에 의해서, Block 페이지가 발생한 경우에 나타나는 현상. 따라서, Sentry.io로 pageSource를 통째로 보내서 확인함.
 
-4. 크롤링 작업 중에 발생한 Error에 대해서, throw 대신 -> log와 Sentry.io로 에러 전송.
+4. 크롤링 작업 중에 발생한 Error에 대해서, throw 대신 -> log와 Sentry.io로 에러 전송. </br>
   : throw를 던질 경우, 나머지 정상적인 데이터를 못가져오고 중지됨. 따라서, 최대한 많은 정보를 가져와야 함.
 
 ## 5-1. 최적화 작업 1 - Throttling.
-  : 1) "2vCPU -> 1vCPU" + 2) "4 GB -> 3.75 GB"로 다운그레이드 된 상황에서도 크롤러를 작동시켜야 함.
+  : 1) "2vCPU -> 1vCPU" + 2) "4 GB -> 3.75 GB"로 다운그레이드 된 상황에서도 크롤러를 작동시켜야 함. </br>
   따라서 네트워크 트래픽 몰림 및 스케줄러의 CPU 코어 독점 방지 목적으로, 매번 크롤링 작업 끝나면 Thread.sleep을 적용.
 
   효과
   : 의도적 성능 저하로 크롤링에 사용되는 시간은 늘어났지만, 다운그레이드된 환경에서도 크롤러가 안정적으로 작동함.
 
 ## 5-2. 최적화 작업 2 - 작업 큐 7개 -> 1개로 감소.
-  : 기존 7개의 커뮤니티 각각에 대해서 @Scheduled를 등록함. 따라서, 7개의 @Scheduled 작업을 1vCPU로 처리하기에 상당히 오버헤드가 크다고 판단함.
+  : 기존 7개의 커뮤니티 각각에 대해서 @Scheduled를 등록함. 따라서, 7개의 @Scheduled 작업을 1vCPU로 처리하기에 상당히 오버헤드가 크다고 판단함. </br>
   따라서, 1개의 @Scheduled 작업에 7개의 커뮤니티를 반복문으로 가져오도록 하되, 1개의 작업을 마친 후 Thread.sleep을 적용. 
 
 ### [ Sample Code ]
 
+</br>
+
 <img width="566" height="442" alt="스크린샷 2025-11-20 132450" src="https://github.com/user-attachments/assets/99c61705-f4a8-4109-b51a-1e9e801f363c" />
 
+</br>
+
 <img width="699" height="658" alt="스크린샷 2025-11-20 153806" src="https://github.com/user-attachments/assets/9c86e8bc-790e-48ac-8c20-e680fabe9ea2" />
+
 
 
 
