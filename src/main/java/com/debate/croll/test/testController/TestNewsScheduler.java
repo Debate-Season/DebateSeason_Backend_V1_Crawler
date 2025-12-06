@@ -199,8 +199,8 @@ public class TestNewsScheduler {
 
 							WebClient webClient = WebClient.create("https://language.googleapis.com");
 							EntityResponse list = webClient.post()
-									 //.header("x-goog-api-key","AIzaSyAiP5qWWRZPqwTGvDUhy-f2UET0YVJJwGo")
-								     .uri("/v2/documents:analyzeEntities?key=AIzaSyAiP5qWWRZPqwTGvDUhy-f2UET0YVJJwGo")
+									 //.header("x-goog-api-key","{Google_API_KEY}")
+								     .uri("/v2/documents:analyzeEntities?key={Google_API_KEY}")
 								     .contentType(MediaType.APPLICATION_JSON)
 								     .bodyValue(d2)
 								     .retrieve()
