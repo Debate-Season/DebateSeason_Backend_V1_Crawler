@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-// 싱글톤에 기록을 하자.
+
 
 @Slf4j
 @Getter
