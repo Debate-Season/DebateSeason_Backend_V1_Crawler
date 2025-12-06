@@ -2,11 +2,6 @@ package com.debate.croll.scheduler.news;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -18,24 +13,27 @@ import org.springframework.stereotype.Component;
 
 import com.debate.croll.domain.entity.Media;
 import com.debate.croll.repository.MediaRepository;
+import com.debate.croll.scheduler.common.Record;
+import com.debate.croll.scheduler.common.Status;
+import com.debate.croll.scheduler.common.Type;
 
 import io.sentry.Sentry;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@RequiredArgsConstructor
-@Component("NewsScheduler")
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class News {
 
 	private final MediaRepository mediaRepository;
-	private final Map<String,String> newsList = new HashMap<>();
-	private Set<String> keys; // 언론사 이름
-	private final List<Integer> category = Arrays.asList(100,101,102,104); // category 번호
-
 	private final ChromeOptions options;
-	
+	//private final LinkedHashMap<String,String> newsList = new LinkedHashMap<>(); // 순서를 보장해야만 한다.
+	//private final List<String> keys = new ArrayList<>(); // 언론사 이름
+	//private final List<Integer> category = Arrays.asList(100,101,102,104); // category 번호
+
+
+	/*
 	@PostConstruct
 	public void init() { // 의존성 주입 -> 초기화 때 실행
 
@@ -53,15 +51,29 @@ public class News {
 		newsList.put("SBS","https://media.naver.com/press/055");
 		newsList.put("KBS","https://media.naver.com/press/056");
 
-		keys = newsList.keySet();
+		//keys = newsList.keySet(); 순서가 뒤틀려서, 중복으로 출력이 된다...
+
+		keys.add("한국경제");
+		keys.add("매일경제");
+		keys.add("한계례");
+		keys.add("조선일보");
+		keys.add("전자신문");
+		keys.add("중앙일보");
+		keys.add("연합뉴스");
+		keys.add("YTN");
+		keys.add("MBC");
+		keys.add("SBS");
+		keys.add("KBS");
+
 	}
 
+	 */
 
-	//@Scheduled(cron = "0 0 17 * * ?",zone = "Asia/Seoul")
-	//@Scheduled(fixedDelay = 86400000)
-	public void crawl() {
+	/*
+	public void crawl(String url, String name, int i) {
 
 		try{
+
 
 			for(String name : keys) {
 
@@ -69,11 +81,18 @@ public class News {
 
 				for (Integer i : category) {
 
-					extractElement(url,name,i);
+
 					Thread.sleep(1500);
 
 				}
 			}
+
+
+
+
+			extractElement(url,name,i);
+
+
 
 		}
 		catch (Exception e){
@@ -86,17 +105,35 @@ public class News {
 
 	}
 
-	public void extractElement(String url, String name, Integer i) {
+	 */
+
+
+
+	public void crawl(Status status, String url, String name, Integer i, int point) {
+
+		// i : 카테고리
+		// j : 인덱스
+		// point : 뉴스를 긁어오는 시작점. 카테고리와 별개.
+
+		int startIndex = 1;
+
 
 		WebDriver driver = null; // 매번 새로 생성된 후, 다하고 버려야 한다. -> 일회용
 
 		// 1. driver 예외를 잡기 위한 처리.
 		try{
 
+			// 예기치 못한 장애로 인해서, 리부팅 시 발동되는 조건
+			if(status.name().equals("Reboot")){
+				startIndex = point;
+			}
+
+
+
 			driver = new ChromeDriver(options); // driver 생성 실패 시, 에러를 잡기 위함.
 			driver.get(url + "?sid=" + i.toString());
 
-			for (int j = 1; j <= 2; j++) {
+			for (int j = startIndex; j <= 2; j++) {
 
 				extractElement2(driver,name,i,j);
 				Thread.sleep(1000);// 분까지 겹치는 경우를 방지해서 일부러 1초 기다림
@@ -104,10 +141,17 @@ public class News {
 			}
 
 		}
+		catch (ArrayIndexOutOfBoundsException e1){
+			log.info("다음 커뮤니티로 넘어갑니다.");
+		}
 		catch (Exception e){
 
-			log.error(e.getMessage());
-			Sentry.captureException(e);
+			String msg = "News.extractElement() : "+name+", "+i+", "+e.getMessage();
+
+			log.error(msg);
+			Exception exception = new Exception(msg);
+
+			Sentry.captureException(exception);
 
 		}
 		finally {
@@ -124,6 +168,7 @@ public class News {
 
 	public void extractElement2(WebDriver driver, String name, Integer i, int j){
 
+		// i는 category 번호 : 100,101,102,104
 		// 웹 페이지에서 Element를 가져올 때, 에러를 잡기 위한 설정.
 
 		try{
@@ -202,11 +247,21 @@ public class News {
 				.build();
 			mediaRepository.save(news);
 
+			// i = category
+			// j = point
+			Record record = new Record(name,i,j,Type.News);
+			record.recordFile();
+
 		}
 		catch ( Exception e ){
 
-			log.error(e.getMessage());
-			Sentry.captureException(e);
+
+			String msg = "News.extractElement2() : "+name+", "+i+", "+e.getMessage();
+
+			log.error(msg);
+			Exception exception = new Exception(msg);
+
+			Sentry.captureException(exception);
 		}
 
 	}

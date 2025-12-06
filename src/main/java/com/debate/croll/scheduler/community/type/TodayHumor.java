@@ -13,9 +13,13 @@ import org.springframework.stereotype.Component;
 import com.debate.croll.common.CommunityConfig;
 import com.debate.croll.domain.entity.Media;
 import com.debate.croll.repository.MediaRepository;
+import com.debate.croll.scheduler.common.Record;
+import com.debate.croll.scheduler.common.Status;
+import com.debate.croll.scheduler.common.Type;
 import com.debate.croll.scheduler.community.template.AbstractCommunityCrawl;
 
 import io.sentry.Sentry;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,10 +31,22 @@ public class TodayHumor extends AbstractCommunityCrawl { // 에러발생
 	private final MediaRepository mediaRepository;
 	private final ChromeOptions options;
 
-	//@Scheduled(fixedDelay = 86400000)
-	public void crawl() throws InterruptedException {
+	private final String name = "TodayHumor";
+	private int start = 2;
+
+	@Override
+	public String getCommunityName() {
+		return this.name;
+	}
+
+	public void crawl(Status status,int point) throws InterruptedException {
 
 		WebDriver driver = null;
+
+		// 예기치 못한 장애로 인해서, 리부팅 시 발동되는 조건
+		if(status.name().equals("Reboot")){
+			start = point;
+		}
 
 		try{
 
@@ -43,19 +59,25 @@ public class TodayHumor extends AbstractCommunityCrawl { // 에러발생
 
 			int loop = CommunityConfig.loop;
 
-			for (int i = 2; i < 2 + loop; i++) {
+			for (int i = start; i < 2 + loop; i++) {
 
 				extractElement(driver,i);
-				Thread.sleep(2000); // 의심을 피하기 위한 설정.
+				Thread.sleep(1500); // 의심을 피하기 위한 설정.
 
 			}
 
 		}
+		catch (ArrayIndexOutOfBoundsException e1){
+			log.info("다음 커뮤니티로 넘어갑니다.");
+		}
 		catch (Exception e){
 
-			// 1. Webdriver 예외 처리.
-			log.error(e.getMessage());
-			Sentry.captureException(e);
+			String msg = "TodayHumor.crawl() : "+e.getMessage();
+
+			log.error(msg);
+			Exception exception = new Exception(msg);
+
+			Sentry.captureException(exception);
 
 		}
 		finally {
@@ -73,6 +95,7 @@ public class TodayHumor extends AbstractCommunityCrawl { // 에러발생
 
 	}
 
+	@Transactional
 	public void extractElement(WebDriver driver,int i) {
 
 		try{
@@ -139,6 +162,11 @@ public class TodayHumor extends AbstractCommunityCrawl { // 에러발생
 				.build();
 
 			mediaRepository.save(todayHumor);
+
+			Record record = new Record(name,i, Type.Community);
+			record.recordFile();
+
+
 		}
 		catch (Exception e){
 

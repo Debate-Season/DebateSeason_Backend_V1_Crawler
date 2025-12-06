@@ -14,9 +14,13 @@ import org.springframework.stereotype.Component;
 import com.debate.croll.common.CommunityConfig;
 import com.debate.croll.domain.entity.Media;
 import com.debate.croll.repository.MediaRepository;
+import com.debate.croll.scheduler.common.Record;
+import com.debate.croll.scheduler.common.Status;
+import com.debate.croll.scheduler.common.Type;
 import com.debate.croll.scheduler.community.template.AbstractCommunityCrawl;
 
 import io.sentry.Sentry;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,12 +31,24 @@ public class HumorUniv extends AbstractCommunityCrawl {
 
 	private final MediaRepository mediaRepository;
 	private final ChromeOptions options;
-	private final int start = 3;
+	private final int init = 3;
 
-	//@Scheduled(fixedDelay = 86400000)
-	public void crawl() throws InterruptedException {
+	private final String name = "HumorUniv";
+	private int start = 0;
+
+	@Override
+	public String getCommunityName() {
+		return this.name;
+	}
+
+	public void crawl(Status status,int point) throws InterruptedException {
 
 		WebDriver driver = null;
+
+		// 예기치 못한 장애로 인해서, 리부팅 시 발동되는 조건
+		if(status.name().equals("Reboot")){
+			start = point;
+		}
 
 		try{
 
@@ -45,19 +61,25 @@ public class HumorUniv extends AbstractCommunityCrawl {
 
 			int loop = CommunityConfig.loop;
 
-			for (int i = 0; i < loop; i++) {
+			for (int i = start; i < loop; i++) {
 
 				extractElement(driver,i);
-				Thread.sleep(2000); // 의심을 피하기 위한 설정.
+				Thread.sleep(1500); // 의심을 피하기 위한 설정.
 
 			}
 
 		}
+		catch (ArrayIndexOutOfBoundsException e1){
+			log.info("다음 커뮤니티로 넘어갑니다.");
+		}
 		catch (Exception e){
 
-			// 1. Webdriver 예외 처리.
-			log.error(e.getMessage());
-			Sentry.captureException(e);
+			String msg = "HumorUniv.crawl() : "+e.getMessage();
+
+			log.error(msg);
+			Exception exception = new Exception(msg);
+
+			Sentry.captureException(exception);
 
 		}
 		finally {
@@ -73,12 +95,13 @@ public class HumorUniv extends AbstractCommunityCrawl {
 
 	}
 
+	@Transactional
 	public void extractElement(WebDriver driver,int i) {
 
 		try {
 
 			WebElement webElement = driver.findElement(
-				By.cssSelector("#list_body > ul > a:nth-child(" + (start + i * 2) + ")"));
+				By.cssSelector("#list_body > ul > a:nth-child(" + (init + i * 2) + ")"));
 
 			//
 			WebElement idElement = webElement.findElement(By.cssSelector("li"));
@@ -97,7 +120,7 @@ public class HumorUniv extends AbstractCommunityCrawl {
 
 			// href
 			String href = driver.findElement(
-				By.cssSelector("#list_body > ul > a:nth-child(" + (start + i * 2) + ")")).getAttribute("href");
+				By.cssSelector("#list_body > ul > a:nth-child(" + (init + i * 2) + ")")).getAttribute("href");
 
 			// 2. 시간 부분만 추출
 			String timePart = time.split(" ")[1]; // "07:31"
@@ -126,6 +149,9 @@ public class HumorUniv extends AbstractCommunityCrawl {
 				.build();
 
 			mediaRepository.save(humorUniv);
+
+			Record record = new Record(name,i, Type.Community);
+			record.recordFile();
 
 		}
 		catch (Exception e){

@@ -13,24 +13,42 @@ import org.springframework.stereotype.Component;
 import com.debate.croll.common.CommunityConfig;
 import com.debate.croll.domain.entity.Media;
 import com.debate.croll.repository.MediaRepository;
+import com.debate.croll.scheduler.common.Record;
+import com.debate.croll.scheduler.common.Status;
+import com.debate.croll.scheduler.common.Type;
 import com.debate.croll.scheduler.community.template.AbstractCommunityCrawl;
 
 import io.sentry.Sentry;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class BoabaeDream extends AbstractCommunityCrawl {
+public class BobaeDream extends AbstractCommunityCrawl {
 
 	private final MediaRepository mediaRepository;
 	private final ChromeOptions options;
 
-	//@Scheduled(fixedDelay = 86400000)
-	public void crawl() throws InterruptedException {
+	private final String name = "BobaeDream";
+	private int start = 1;
+
+	@Override
+	public String getCommunityName() {
+		return this.name;
+	}
+
+	// 1. 정상적인 작동
+	@Override
+	public void crawl(Status status,int point) throws InterruptedException {
 
 		WebDriver driver = null;
+
+		// 예기치 못한 장애로 인해서, 리부팅 시 발동되는 조건
+		if(status.name().equals("Reboot")){
+			start = point;
+		}
 
 		try{
 
@@ -43,15 +61,23 @@ public class BoabaeDream extends AbstractCommunityCrawl {
 
 			int loop = CommunityConfig.loop;
 
-			for (int i = 1; i <= loop; i++) { // 총 5회 실행을 하면서, 매번 필요한 요소를 찾는다.
+			for (int i = start; i <= loop; i++) { // 총 5회 실행을 하면서, 매번 필요한 요소를 찾는다.
 				extractElement(driver,i);
-				Thread.sleep(2000); // bot 의심 피하기
+				Thread.sleep(1500); // bot 의심 피하기
 			}
 
 		}
+		catch (ArrayIndexOutOfBoundsException e1){
+			log.info("다음 커뮤니티로 넘어갑니다.");
+		}
 		catch (Exception e){
-			log.error(e.getMessage());
-			Sentry.captureException(e);
+
+			String msg = "BobaeDream.crawl() : "+e.getMessage();
+
+			log.error(msg);
+			Exception exception = new Exception(msg);
+
+			Sentry.captureException(exception);
 
 		}
 		finally {
@@ -69,6 +95,7 @@ public class BoabaeDream extends AbstractCommunityCrawl {
 	}
 
 	// 가독성을 위해서 분리.
+	@Transactional // 리부팅 시 복구를 위해서, 매 트랜잭션 순간마다 기록을 한다.
 	public void extractElement(WebDriver driver,int i) {
 
 		try{
@@ -105,9 +132,10 @@ public class BoabaeDream extends AbstractCommunityCrawl {
 
 			mediaRepository.save(boBaeDream);
 
+			Record record = new Record(name,i, Type.Community);
+			record.recordFile();
 
-		}
-		catch (Exception e){
+		} catch (Exception e){
 
 			log.error(e.getMessage());
 
